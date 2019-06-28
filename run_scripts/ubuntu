@@ -1,0 +1,2 @@
+#!/bin/bash
+docker run -d  -ti --rm -p 3389:3389 -p 22:22 -u root ubuntu /bin/bash -c 'service xrdp restart && service ssh start && bash' 
