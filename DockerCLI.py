@@ -1,5 +1,5 @@
 from PyQt5 import QtGui, QtWidgets, QtCore, uic
-import sys, os, psutil
+import sys, os, psutil, threading
 import os.path
 from time import gmtime, strftime
 import qdarkstyle
@@ -15,7 +15,7 @@ def get_script_dir(follow_symlinks=True):
     if follow_symlinks:
         path = os.path.realpath(path)
     return os.path.dirname(path)
-print(get_script_dir())
+
 os.chdir(get_script_dir())
 
 CPU_PERSENT_FOR_DOCKER_USAGE = []
@@ -88,11 +88,11 @@ class MainWindow(QtWidgets.QMainWindow):
         self.figure_graph2_ax.grid(linestyle='-.', color='grey')
         self.figure_graph2_ax.set_title("MEM USAGE %")
         self.verticalLayout_8.addWidget(self.figure_graph2_canvas)
+        self.searchWindow = SearchConteiner()
+        self.actionSearch_in_docker_HUB.triggered.connect(lambda: self.searchWindow.show())
 
 
     def updateGraph(self):
-        print(CPU_PERSENT_FOR_DOCKER_USAGE)
-        print(MEM_PERSENT_FOR_DOCKER_USAGE)
         self.figure_graph1_ax.cla()
         self.figure_graph1_ax.grid(linestyle='-.', color='grey')
         self.figure_graph1_ax.axis((0, 60, 0, 100))
@@ -150,64 +150,72 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def commitImage(self):
         global item_selected
-        if selected_Column == 0:
-            item = self.tableWidget_2.item(selected_row, selected_Column)
-        item.setBackground(red_color)
-        item = self.tableWidget_2.item(selected_row, selected_Column + 1)
-        image_commit_name = item.text()
-        rezult = os.popen('docker commit ' + selectedRunningConteiner + " " + image_commit_name)
-        print(rezult)
-        logTextEdit.setTextColor(white_color)
-        logTextEdit.append(
-            strftime("%Y-%m-%d %H:%M:%S", gmtime()) + ": save image %s" + selectedRunningConteiner + " " + image_commit_name + "\n" +
-            str(rezult))
-        logTextEdit.setTextColor(green_color)
-        logTextEdit.append('OK')
-        logTextEdit.setTextColor(white_color)
+        try:
+            if selected_Column == 0:
+                item = self.tableWidget_2.item(selected_row, selected_Column)
+            item.setBackground(red_color)
+            item = self.tableWidget_2.item(selected_row, selected_Column + 1)
+            image_commit_name = item.text()
+            rezult = os.popen('docker commit ' + selectedRunningConteiner + " " + image_commit_name)
+            logTextEdit.setTextColor(white_color)
+            logTextEdit.append(
+                strftime("%Y-%m-%d %H:%M:%S", gmtime()) + ": save image %s" + selectedRunningConteiner + " " + image_commit_name + "\n" +
+                str(rezult))
+            logTextEdit.setTextColor(green_color)
+            logTextEdit.append('OK')
+            logTextEdit.setTextColor(white_color)
+        except:
+            pass
 
 
     def unpauseImage(self):
         global item_selected, paused
         if selected_Column == 0:
-            item = self.tableWidget_2.item(selected_row, selected_Column)
-            item.setBackground(red_color)
-            rezult = os.popen('docker unpause %s' % selectedRunningConteiner)
-            logTextEdit.setTextColor(white_color)
-            logTextEdit.append(
-                strftime("%Y-%m-%d %H:%M:%S", gmtime()) + ": unpaused image %s" % selectedRunningConteiner + "\n" +
-                str(rezult))
-            logTextEdit.setTextColor(green_color)
-            logTextEdit.append('OK')
-            logTextEdit.setTextColor(white_color)
-            item = self.tableWidget_2.item(selected_row, selected_Column + 1)
-            image_stop_name = item.text()
-            items = self.tableWidget.findItems(image_stop_name, QtCore.Qt.MatchExactly)
-            for i in items:
-                i.setBackground(green_color)
-            if paused != []:
-                paused.remove(selectedRunningConteiner)
+            try:
+                item = self.tableWidget_2.item(selected_row, selected_Column)
+                item.setBackground(red_color)
+                rezult = os.popen('docker unpause %s' % selectedRunningConteiner)
+                logTextEdit.setTextColor(white_color)
+                logTextEdit.append(
+                    strftime("%Y-%m-%d %H:%M:%S", gmtime()) + ": unpaused image %s" % selectedRunningConteiner + "\n" +
+                    str(rezult))
+                logTextEdit.setTextColor(green_color)
+                logTextEdit.append('OK')
+                logTextEdit.setTextColor(white_color)
+                item = self.tableWidget_2.item(selected_row, selected_Column + 1)
+                image_stop_name = item.text()
+                items = self.tableWidget.findItems(image_stop_name, QtCore.Qt.MatchExactly)
+                for i in items:
+                    i.setBackground(green_color)
+                if paused != []:
+                    paused.remove(selectedRunningConteiner)
+            except:
+                pass
 
     def pauseImage(self):
         global paused
         global item_selected
         if selected_Column == 0:
-            item = self.tableWidget_2.item(selected_row, selected_Column)
-            item.setBackground(red_color)
-            rezult = os.popen('docker pause %s' % selectedRunningConteiner)
-            logTextEdit.setTextColor(white_color)
-            logTextEdit.append(
-                strftime("%Y-%m-%d %H:%M:%S", gmtime()) + ": paused image %s" % selectedRunningConteiner + "\n" +
-                str(rezult))
-            logTextEdit.setTextColor(blue_color)
-            logTextEdit.append('OK')
-            logTextEdit.setTextColor(white_color)
-            item = self.tableWidget_2.item(selected_row, selected_Column + 1)
-            image_stop_name = item.text()
-            items = self.tableWidget.findItems(image_stop_name, QtCore.Qt.MatchExactly)
-            for i in items:
-                i.setBackground(blue_color)
-            if selectedRunningConteiner not in paused:
-                    paused.append(selectedRunningConteiner)
+            try:
+                item = self.tableWidget_2.item(selected_row, selected_Column)
+                item.setBackground(red_color)
+                rezult = os.popen('docker pause %s' % selectedRunningConteiner)
+                logTextEdit.setTextColor(white_color)
+                logTextEdit.append(
+                    strftime("%Y-%m-%d %H:%M:%S", gmtime()) + ": paused image %s" % selectedRunningConteiner + "\n" +
+                    str(rezult))
+                logTextEdit.setTextColor(blue_color)
+                logTextEdit.append('OK')
+                logTextEdit.setTextColor(white_color)
+                item = self.tableWidget_2.item(selected_row, selected_Column + 1)
+                image_stop_name = item.text()
+                items = self.tableWidget.findItems(image_stop_name, QtCore.Qt.MatchExactly)
+                for i in items:
+                    i.setBackground(blue_color)
+                if selectedRunningConteiner not in paused:
+                        paused.append(selectedRunningConteiner)
+            except:
+                pass
 
 
     def setselectedStartConteiner(self,row, column):
@@ -247,23 +255,32 @@ class MainWindow(QtWidgets.QMainWindow):
     def stopRunningImage(self):
         global item_selected, selectedStartConteiner, paused
         if selected_Column == 0:
-            item = self.tableWidget_2.item(selected_row, selected_Column)
-            item.setBackground(red_color)
-            rezult = os.popen('docker stop %s' % selectedRunningConteiner)
-            logTextEdit.setTextColor(white_color)
-            logTextEdit.append(strftime("%Y-%m-%d %H:%M:%S", gmtime()) + ": stopping image %s" %selectedRunningConteiner + "\n" +
-                            str(rezult))
-            logTextEdit.setTextColor(yelow_color)
-            logTextEdit.append('OK')
-            logTextEdit.setTextColor(white_color)
-            item = self.tableWidget_2.item(selected_row, selected_Column+1)
-            image_stop_name = item.text()
-            items = self.tableWidget.findItems(image_stop_name, QtCore.Qt.MatchExactly)
-            for i in items:
-                i.setBackground(yelow_color)
-            selectedStartConteiner = ''
             try:
-                paused.remove(selectedRunningConteiner)
+                item = self.tableWidget_2.item(selected_row, selected_Column)
+                try:
+                    item.setBackground(red_color)
+                except:
+                    pass
+                rezult = os.popen('docker stop %s' % selectedRunningConteiner)
+                logTextEdit.setTextColor(white_color)
+                logTextEdit.append(strftime("%Y-%m-%d %H:%M:%S", gmtime()) + ": stopping image %s" %selectedRunningConteiner + "\n" +
+                                str(rezult))
+                logTextEdit.setTextColor(yelow_color)
+                logTextEdit.append('OK')
+                logTextEdit.setTextColor(white_color)
+                item = self.tableWidget_2.item(selected_row, selected_Column+1)
+                try:
+                    image_stop_name = item.text()
+                except:
+                    pass
+                items = self.tableWidget.findItems(image_stop_name, QtCore.Qt.MatchExactly)
+                for i in items:
+                    i.setBackground(yelow_color)
+                selectedStartConteiner = ''
+                try:
+                    paused.remove(selectedRunningConteiner)
+                except:
+                    pass
             except:
                 pass
 
@@ -440,6 +457,77 @@ class PsuTilThread(QtCore.QThread):
             self.emiter.emit("UPDATE")
         except:
             pass
+
+
+class SearchConteiner(QtWidgets.QMainWindow):
+    def __init__(self):
+        QtWidgets.QMainWindow.__init__(self)
+        self.ui = uic.loadUi('searchConteiner.ui', self)
+        self.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
+        self.pushButton_2.setIcon(QtGui.QIcon('resurse/search.png'))
+        self.pushButton.setIcon(QtGui.QIcon('resurse/install.ico'))
+        self.pushButton_2.clicked.connect(self.searchConteiner)
+        self.pushButton.clicked.connect(self.installConteiner)
+
+
+    def installConteiner(self):
+        item = self.tableWidget.currentItem()
+        if item.column() == 0:
+            th = threading.Thread(target=self.installConteinerThread(name=item.text()))
+            th.start()
+
+
+    def installConteinerThread(self,name):
+        rezult = os.popen('docker pull %s' % name).read()
+        self.textEdit.setTextColor(green_color)
+        self.textEdit.append(rezult)
+
+
+
+    def searchConteiner(self):
+        th = threading.Thread(target=self.processCommunicate)
+        th.start()
+
+    def processCommunicate(self):
+        for i in reversed(range(self.tableWidget.rowCount())):
+            self.tableWidget.removeRow(i)
+        for i in reversed(range(self.tableWidget.columnCount())):
+            self.tableWidget.removeColumn(i)
+        rezult = os.popen('docker search %s' % self.lineEdit.text()).read()
+        print(rezult)
+        if rezult == "NAME                DESCRIPTION         STARS               OFFICIAL            AUTOMATED\n":
+            self.textEdit.setTextColor(red_color)
+            self.textEdit.append("No found rezult for %s" % self.lineEdit.text())
+        else:
+            tableLablesSet = []
+            tableLables = rezult.split('\n')[0]
+            tableLables = tableLables.split(' ')
+            for i in tableLables:
+                if i !='':
+                    tableLablesSet.append(i)
+
+            self.tableWidget.setColumnCount(len(tableLablesSet))
+            self.tableWidget.setHorizontalHeaderLabels(tableLablesSet)
+            rezult = rezult.split('\n')[1:]
+            for rowData in rezult:
+                rowData = rowData.split('   ')
+                rowForTable = []
+                for i in rowData:
+                    if i != '':
+                        rowForTable.append(i)
+                currentRowCount = self.tableWidget.rowCount()
+                self.tableWidget.insertRow(currentRowCount)
+                print(rowForTable)
+                collumn = 0
+                for i in rowForTable:
+                    item = QtWidgets.QTableWidgetItem(i)
+                    self.tableWidget.setItem(currentRowCount, collumn, item)
+                    self.tableWidget.resizeColumnsToContents()
+                    collumn += 1
+
+
+
+
 
 app = QtWidgets.QApplication(sys.argv)
 Form = MainWindow()

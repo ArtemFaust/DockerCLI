@@ -251,7 +251,14 @@
      <string>Menu</string>
     </property>
    </widget>
+   <widget class="QMenu" name="menuConteiner">
+    <property name="title">
+     <string>Conteiner</string>
+    </property>
+    <addaction name="actionSearch_in_docker_HUB"/>
+   </widget>
    <addaction name="menuMenu"/>
+   <addaction name="menuConteiner"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionShow_log">
@@ -282,6 +289,11 @@
   <action name="actionshow_port">
    <property name="text">
     <string>show port</string>
+   </property>
+  </action>
+  <action name="actionSearch_in_docker_HUB">
+   <property name="text">
+    <string>Search in docker HUB</string>
    </property>
   </action>
  </widget>

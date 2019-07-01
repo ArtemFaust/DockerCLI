@@ -1,0 +1,3 @@
+#!/bin/bash
+#!/bin/bash
+docker run -d  -ti --rm  centos /bin/bash -c ' bash' 
